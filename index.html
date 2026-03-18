@@ -301,6 +301,18 @@ loginBtn.onclick = function(){
     });
 }
 
+// Auto-login if user exists
+if(currentUser){
+    db.ref("users/"+currentUser).once("value", snapshot=>{
+        if(snapshot.exists()){
+            score=snapshot.val().score||0;
+            startGame();
+        } else {
+            localStorage.removeItem("currentUser");
+        }
+    });
+}
+
 header.onclick=function(){
     localStorage.removeItem("currentUser");
     location.reload();
@@ -350,7 +362,7 @@ fundBtn.onclick=function(){
         const targetScore=snapshot.val().score||0;
         db.ref("users/"+targetUser+"/score").set(targetScore+amount, ()=>updateLeaderboard());
         // Global Last Funds
-        db.ref("lastFunds").push({from: currentUser,to: targetUser,amount:amount,timestamp:Date.now()});
+        db.ref("lastFunds").push({from: currentUser,to: targetUser,amount:amount,timestamp: Date.now()});
     });
 }
 
