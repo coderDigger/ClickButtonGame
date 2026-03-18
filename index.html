@@ -1,58 +1,183 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Global Leaderboard</title>
+<title>Clicker Game</title>
 <style>
-    body {
-        font-family: Arial;
-        background: #111;
-        color: white;
-        text-align: center;
-        margin-top: 50px;
-    }
-    input, button {
-        display: block;
-        margin: 10px auto;
-        padding: 10px;
-        width: 200px;
-        cursor: pointer;
-    }
-    #leaderboard {
-        margin-top: 30px;
-        text-align: left;
-        display: inline-block;
-    }
-    li {
-        margin: 5px 0;
-    }
+body {
+    font-family: Arial;
+    background: #111;
+    color: white;
+    margin: 0;
+    padding: 0;
+}
+#header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    margin: 10px 20px;
+    font-size: 24px;
+    cursor: pointer;
+    display: none;
+}
+#gameContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 60px;
+    padding: 0 50px;
+}
+#mainGame {
+    text-align: center;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#leaderboard {
+    margin-top: 30px;
+    text-align: left;
+}
+li { margin: 3px 0; }
+#fundPanel, #upgradePanel {
+    padding: 25px;
+    background: #222;
+    border-radius: 12px;
+    width: 250px;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+button {
+    padding: 14px 24px;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    margin: 8px 0;
+    transition: transform 0.2s, background 0.2s;
+}
+button:hover { transform: scale(1.05); }
+input {
+    width: 220px;
+    padding: 12px;
+    margin: 5px 0;
+    border-radius: 6px;
+    border: none;
+    font-size: 14px;
+    background-color: #555;
+    color: white;
+    text-align: center;
+}
+h3 { margin-bottom: 10px; }
+h4 { margin-top: 15px; }
+.listBox {
+    background: #333;
+    padding: 10px;
+    width: 100%;
+    max-height: 150px;
+    overflow-y: auto;
+    border-radius: 6px;
+    margin-top: 10px;
+}
+#signInForm { margin-bottom: 20px; width:100%; display:flex; flex-direction: column; align-items:center; }
+#adminToggle {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background: #444;
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    z-index: 1000;
+    display: none;
+}
+#adminPanel {
+    position: fixed;
+    right: 20px;
+    bottom: 60px;
+    background: #333;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px black;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    z-index: 999;
+}
+#clearLeaderboardBtn {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    background-color: #555;
+    color: white;
+    cursor: pointer;
+    z-index: 1000;
+}
 </style>
 </head>
 <body>
 
-<h1 id="title">Kayıt Ol ve Puan Kazan</h1>
+<div id="header" title="Logout">⎋</div>
+<button id="clearLeaderboardBtn">Clear Leaderboard</button>
 
-<div id="registerForm">
-    <input type="text" id="username" placeholder="Kullanıcı adı">
-    <button id="registerBtn">Kayıt Ol</button>
-    <p id="result"></p>
+<div id="gameContainer">
+    <div id="fundPanel">
+        <h3>Fund</h3>
+        <input type="text" id="fundUser" placeholder="Username to Fund">
+        <input type="number" id="fundAmount" placeholder="Amount">
+        <button id="fundBtn">Fund Player</button>
+        <h4>Last Funds</h4>
+        <div id="lastFunds" class="listBox"></div>
+    </div>
+
+    <div id="mainGame">
+        <div id="signInForm">
+            <h2>Sign In / Sign Up</h2>
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button id="registerBtn">Sign Up</button>
+            <button id="loginBtn">Sign In</button>
+            <p id="result"></p>
+        </div>
+
+        <div id="game" style="display:none;">
+            <h2>Welcome, <span id="userDisplay"></span>!</h2>
+            <button id="scoreBtn">Click Me (+<span id="ppcDisplay">1</span>)</button>
+            <p>Your Score: <span id="scoreDisplay">0</span></p>
+            <div id="endGameMessage"></div>
+            <h2>Leaderboard</h2>
+            <ul id="leaderboard"></ul>
+        </div>
+    </div>
+
+    <div id="upgradePanel">
+        <h3>Upgrade</h3>
+        <p>Current PPC: <span id="infoPPC">1</span></p>
+        <p>Next Upgrade: <span id="nextUpgrade">2 PPC at 10,000 points</span></p>
+        <button id="upgradeBtn">Upgrade PPC</button>
+        <h4>Last Upgrades</h4>
+        <div id="lastUpgrades" class="listBox"></div>
+    </div>
 </div>
 
-<div id="game" style="display:none;">
-    <h2>Hoşgeldin, <span id="userDisplay"></span>!</h2>
-    <button id="scoreBtn">Butona Bas (+1)</button>
-    <p>Puanın: <span id="scoreDisplay">0</span></p>
+<div id="adminToggle">⚙️</div>
+<div id="adminPanel">
+    <h4>Admin Panel</h4>
+    <button id="delScoresBtn">Delete Leaderboard</button>
+    <button id="delNamesBtn">Delete Names</button>
 </div>
 
-<h2>Leaderboard</h2>
-<ul id="leaderboard"></ul>
-
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
 <script>
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyDNPs86IvxikrbOnQn19HC17pq5_0Fd-Fk",
   authDomain: "clickthebutton-5589c.firebaseapp.com",
@@ -65,81 +190,217 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-const registerForm = document.getElementById("registerForm");
-const gameDiv = document.getElementById("game");
+const header = document.getElementById("header");
+const signInForm = document.getElementById("signInForm");
 const usernameInput = document.getElementById("username");
+const passwordInput = document.getElementById("password");
+const registerBtn = document.getElementById("registerBtn");
+const loginBtn = document.getElementById("loginBtn");
+const result = document.getElementById("result");
+const gameDiv = document.getElementById("game");
 const userDisplay = document.getElementById("userDisplay");
 const scoreDisplay = document.getElementById("scoreDisplay");
-const result = document.getElementById("result");
 const leaderboard = document.getElementById("leaderboard");
+const scoreBtn = document.getElementById("scoreBtn");
+const ppcDisplay = document.getElementById("ppcDisplay");
+const upgradeBtn = document.getElementById("upgradeBtn");
+const fundBtn = document.getElementById("fundBtn");
+const fundUserInput = document.getElementById("fundUser");
+const fundAmountInput = document.getElementById("fundAmount");
+const infoPPC = document.getElementById("infoPPC");
+const nextUpgrade = document.getElementById("nextUpgrade");
+const endGameMessage = document.getElementById("endGameMessage");
+const lastFundsDiv = document.getElementById("lastFunds");
+const lastUpgradesDiv = document.getElementById("lastUpgrades");
+
+const adminToggle = document.getElementById("adminToggle");
+const adminPanel = document.getElementById("adminPanel");
+const delScoresBtn = document.getElementById("delScoresBtn");
+const delNamesBtn = document.getElementById("delNamesBtn");
+const clearLeaderboardBtn = document.getElementById("clearLeaderboardBtn");
 
 let currentUser = localStorage.getItem("currentUser");
-let puan = 0;
+let score = 0;
+let pointsPerClick = 1;
+let lastMilestone = 0;
 
-// Leaderboard güncelle
-function updateLeaderboard() {
+const upgradeTiers = [
+    {threshold: 10000, ppc: 2},
+    {threshold: 50000, ppc: 5},
+    {threshold: 100000, ppc: 10},
+    {threshold: 500000, ppc: 20},
+    {threshold: 1000000, ppc: 50},
+    {threshold: 5000000, ppc: 100},
+    {threshold: 10000000, ppc: 200},
+    {threshold: 50000000, ppc: 500},
+    {threshold: 100000000, ppc: 1000},
+];
+
+function updateLeaderboard(){
     db.ref("users").once("value", snapshot=>{
         const data = snapshot.val() || {};
         const sorted = Object.entries(data).sort((a,b)=> b[1].score - a[1].score);
         leaderboard.innerHTML = "";
         sorted.forEach(([name, info])=>{
             let li = document.createElement("li");
-            li.innerText = `${name}: ${info.score} puan`;
+            li.innerText = `${name}: ${info.score} points`;
             leaderboard.appendChild(li);
         });
     });
 }
 
-// Mevcut kullanıcı varsa yükle
-if(currentUser){
-    userDisplay.innerText = currentUser;
-    gameDiv.style.display = "block";
-    registerForm.style.display = "none";
-    db.ref("users/" + currentUser).once("value", snapshot=>{
-        puan = snapshot.val()?.score || 0;
-        scoreDisplay.innerText = puan;
-    });
-}
-
-// Kayıt olma
-document.getElementById("registerBtn").onclick = function(){
-    const username = usernameInput.value.trim();
-    if(!username) { result.innerText = "Kullanıcı adı gir!"; return; }
-
-    db.ref("users/" + username).once("value", snapshot=>{
-        if(snapshot.exists()){
-            result.innerText = "Bu kullanıcı zaten var!";
-        } else {
-            db.ref("users/" + username).set({score:0}, ()=>{
-                currentUser = username;
-                localStorage.setItem("currentUser", username);
-                puan = 0;
-                userDisplay.innerText = currentUser;
-                scoreDisplay.innerText = puan;
-                registerForm.style.display = "none";
-                gameDiv.style.display = "block";
-                updateLeaderboard();
-            });
+function updatePPC(){
+    for(let i=upgradeTiers.length-1;i>=0;i--){
+        if(score>=upgradeTiers[i].threshold){
+            pointsPerClick=upgradeTiers[i].ppc;
+            lastMilestone=upgradeTiers[i].threshold;
+            break;
         }
+    }
+    ppcDisplay.innerText=pointsPerClick;
+    infoPPC.innerText=pointsPerClick;
+    updateUpgradeInfo();
+}
+
+function updateUpgradeInfo(){
+    let nextTier=upgradeTiers.find(t=>t.threshold>score);
+    if(nextTier){
+        nextUpgrade.innerText=`Next Upgrade: ${nextTier.ppc} PPC at ${nextTier.threshold} points`;
+    } else {
+        nextUpgrade.innerText=`Next Upgrade: Automatic scaling beyond ${pointsPerClick} PPC`;
+    }
+}
+
+function startGame(){
+    signInForm.style.display="none";
+    gameDiv.style.display="block";
+    header.style.display="block";
+    userDisplay.innerText=currentUser;
+    scoreDisplay.innerText=score;
+    updateUpgradeInfo();
+    updatePPC();
+    updateLeaderboard();
+
+    if(currentUser==="Kanaska"){
+        adminToggle.style.display="block";
+    }
+}
+
+registerBtn.onclick = function() {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+    if (!username || !password) { result.innerText = "Enter username & password!"; return; }
+    db.ref("users/" + username).once("value", snapshot => {
+        if (snapshot.exists()) { result.innerText = "User already exists!"; return; }
+        db.ref("users/"+username).set({score:0,password:password}, ()=>{
+            currentUser = username;
+            localStorage.setItem("currentUser", currentUser);
+            score=0;
+            startGame();
+        });
     });
 }
 
-// Puan artırma
-document.getElementById("scoreBtn").onclick = function(){
-    if(!currentUser) return;
-
-    puan += 1; // anında artır
-    scoreDisplay.innerText = puan; // ekranda göster
-
-    // Firebase'e kaydet
-    db.ref("users/" + currentUser + "/score").set(puan, ()=>{
-        updateLeaderboard();
+loginBtn.onclick = function(){
+    const username=usernameInput.value.trim();
+    const password=passwordInput.value.trim();
+    if(!username||!password){result.innerText="Enter username & password!";return;}
+    db.ref("users/"+username).once("value", snapshot=>{
+        if(!snapshot.exists()){result.innerText="User not found!";return;}
+        if(snapshot.val().password!==password){result.innerText="Wrong password!";return;}
+        currentUser=username;
+        localStorage.setItem("currentUser",currentUser);
+        score=snapshot.val().score||0;
+        startGame();
     });
 }
 
-// Başlangıçta leaderboard güncelle
+header.onclick=function(){
+    localStorage.removeItem("currentUser");
+    location.reload();
+}
+
+scoreBtn.onclick=function(){
+    if(!currentUser)return;
+    score+=pointsPerClick;
+    scoreDisplay.innerText=score;
+    updatePPC();
+    db.ref("users/"+currentUser+"/score").set(score, ()=>updateLeaderboard());
+    if(score>=1000000000){
+        endGameMessage.innerText="End the game??";
+        scoreBtn.disabled=true;
+        upgradeBtn.disabled=true;
+    }
+}
+
+upgradeBtn.onclick=function(){
+    let nextTier=upgradeTiers.find(t=>t.threshold>score);
+    if(nextTier&&score>=nextTier.threshold){
+        pointsPerClick=nextTier.ppc;
+        lastMilestone=nextTier.threshold;
+        ppcDisplay.innerText=pointsPerClick;
+        infoPPC.innerText=pointsPerClick;
+        const entry=document.createElement("div");
+        entry.innerText=`${currentUser} upgraded to ${pointsPerClick} PPC`;
+        lastUpgradesDiv.prepend(entry);
+    }else{
+        alert("Not enough points for next upgrade yet!");
+    }
+    updateUpgradeInfo();
+}
+
+fundBtn.onclick=function(){
+    const targetUser=fundUserInput.value.trim();
+    const amount=parseInt(fundAmountInput.value);
+    if(!targetUser||isNaN(amount)||amount<=0){alert("Enter valid username and amount!");return;}
+    if(score<amount){alert("Not enough points!");return;}
+    db.ref("users/"+targetUser).once("value", snapshot=>{
+        if(!snapshot.exists()){alert("Target user not found!");return;}
+        score-=amount;
+        scoreDisplay.innerText=score;
+        db.ref("users/"+currentUser+"/score").set(score);
+        const targetScore=snapshot.val().score||0;
+        db.ref("users/"+targetUser+"/score").set(targetScore+amount, ()=>updateLeaderboard());
+
+        const entry=document.createElement("div");
+        entry.innerText=`${currentUser} gave ${amount} to ${targetUser}`;
+        entry.style.color=`hsl(${Math.random()*360},80%,60%)`;
+        lastFundsDiv.prepend(entry);
+    });
+}
+
+adminToggle.onclick=function(){
+    adminPanel.style.display=(adminPanel.style.display==="none"||adminPanel.style.display=="")?"flex":"none";
+}
+
+delScoresBtn.onclick=function(){
+    if(confirm("Are you sure? This will reset all scores!")){
+        db.ref("users").once("value", snapshot =>{
+            const users=snapshot.val()||{};
+            for(let username in users){
+                db.ref("users/"+username+"/score").set(0);
+            }
+            updateLeaderboard();
+        });
+    }
+}
+
+delNamesBtn.onclick=function(){
+    if(confirm("Are you sure? This will delete all users and scores!")){
+        db.ref("users").remove(()=>updateLeaderboard());
+    }
+}
+
+// Clear leaderboard herkese açık
+clearLeaderboardBtn.onclick=function(){
+    if(confirm("Are you sure? This will delete all users and scores!")){
+        db.ref("users").remove(()=>updateLeaderboard());
+        clearLeaderboardBtn.remove();
+    }
+}
+
 updateLeaderboard();
-setInterval(updateLeaderboard, 3000);
+setInterval(updateLeaderboard,3000);
 </script>
 
 </body>
