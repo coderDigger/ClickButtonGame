@@ -107,26 +107,11 @@ h4 { margin-top: 15px; }
     align-items: center;
     z-index: 999;
 }
-#clearLeaderboardBtn {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 12px 20px;
-    font-size: 16px;
-    border-radius: 8px;
-    border: none;
-    background-color: #555;
-    color: white;
-    cursor: pointer;
-    z-index: 1000;
-}
 </style>
 </head>
 <body>
 
 <div id="header" title="Logout">⎋</div>
-<button id="clearLeaderboardBtn">Clear Leaderboard</button>
 
 <div id="gameContainer">
     <div id="fundPanel">
@@ -217,7 +202,6 @@ const adminToggle = document.getElementById("adminToggle");
 const adminPanel = document.getElementById("adminPanel");
 const delScoresBtn = document.getElementById("delScoresBtn");
 const delNamesBtn = document.getElementById("delNamesBtn");
-const clearLeaderboardBtn = document.getElementById("clearLeaderboardBtn");
 
 let currentUser = localStorage.getItem("currentUser");
 let score = 0;
@@ -286,6 +270,7 @@ function startGame(){
     }
 }
 
+// Sign Up
 registerBtn.onclick = function() {
     const username = usernameInput.value.trim();
     const password = passwordInput.value.trim();
@@ -301,6 +286,7 @@ registerBtn.onclick = function() {
     });
 }
 
+// Sign In
 loginBtn.onclick = function(){
     const username=usernameInput.value.trim();
     const password=passwordInput.value.trim();
@@ -320,6 +306,7 @@ header.onclick=function(){
     location.reload();
 }
 
+// Click button
 scoreBtn.onclick=function(){
     if(!currentUser)return;
     score+=pointsPerClick;
@@ -333,6 +320,7 @@ scoreBtn.onclick=function(){
     }
 }
 
+// Upgrade button
 upgradeBtn.onclick=function(){
     let nextTier=upgradeTiers.find(t=>t.threshold>score);
     if(nextTier&&score>=nextTier.threshold){
@@ -340,15 +328,15 @@ upgradeBtn.onclick=function(){
         lastMilestone=nextTier.threshold;
         ppcDisplay.innerText=pointsPerClick;
         infoPPC.innerText=pointsPerClick;
-        const entry=document.createElement("div");
-        entry.innerText=`${currentUser} upgraded to ${pointsPerClick} PPC`;
-        lastUpgradesDiv.prepend(entry);
+        // Global Last Upgrades
+        db.ref("lastUpgrades").push({user: currentUser, ppc: pointsPerClick, timestamp: Date.now()});
     }else{
         alert("Not enough points for next upgrade yet!");
     }
     updateUpgradeInfo();
 }
 
+// Fund button
 fundBtn.onclick=function(){
     const targetUser=fundUserInput.value.trim();
     const amount=parseInt(fundAmountInput.value);
@@ -361,18 +349,40 @@ fundBtn.onclick=function(){
         db.ref("users/"+currentUser+"/score").set(score);
         const targetScore=snapshot.val().score||0;
         db.ref("users/"+targetUser+"/score").set(targetScore+amount, ()=>updateLeaderboard());
-
-        const entry=document.createElement("div");
-        entry.innerText=`${currentUser} gave ${amount} to ${targetUser}`;
-        entry.style.color=`hsl(${Math.random()*360},80%,60%)`;
-        lastFundsDiv.prepend(entry);
+        // Global Last Funds
+        db.ref("lastFunds").push({from: currentUser,to: targetUser,amount:amount,timestamp:Date.now()});
     });
 }
 
+// Real-time Last Funds
+db.ref("lastFunds").on("value", snapshot => {
+    const data = snapshot.val() || {};
+    lastFundsDiv.innerHTML = "";
+    Object.values(data).reverse().forEach(entry => {
+        const div = document.createElement("div");
+        div.innerText = `${entry.from} gave ${entry.amount} to ${entry.to}`;
+        div.style.color = `hsl(${Math.random()*360},80%,60%)`;
+        lastFundsDiv.appendChild(div);
+    });
+});
+
+// Real-time Last Upgrades
+db.ref("lastUpgrades").on("value", snapshot => {
+    const data = snapshot.val() || {};
+    lastUpgradesDiv.innerHTML = "";
+    Object.values(data).reverse().forEach(entry => {
+        const div = document.createElement("div");
+        div.innerText = `${entry.user} upgraded to ${entry.ppc} PPC`;
+        lastUpgradesDiv.appendChild(div);
+    });
+});
+
+// Admin panel toggle
 adminToggle.onclick=function(){
     adminPanel.style.display=(adminPanel.style.display==="none"||adminPanel.style.display=="")?"flex":"none";
 }
 
+// Admin buttons
 delScoresBtn.onclick=function(){
     if(confirm("Are you sure? This will reset all scores!")){
         db.ref("users").once("value", snapshot =>{
@@ -388,14 +398,6 @@ delScoresBtn.onclick=function(){
 delNamesBtn.onclick=function(){
     if(confirm("Are you sure? This will delete all users and scores!")){
         db.ref("users").remove(()=>updateLeaderboard());
-    }
-}
-
-// Clear leaderboard herkese açık
-clearLeaderboardBtn.onclick=function(){
-    if(confirm("Are you sure? This will delete all users and scores!")){
-        db.ref("users").remove(()=>updateLeaderboard());
-        clearLeaderboardBtn.remove();
     }
 }
 
