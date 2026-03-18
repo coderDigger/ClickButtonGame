@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Global Leaderboard</title>
+<style>
+    body {
+        font-family: Arial;
+        background: #111;
+        color: white;
+        text-align: center;
+        margin-top: 50px;
+    }
+    input, button {
+        display: block;
+        margin: 10px auto;
+        padding: 10px;
+        width: 200px;
+        cursor: pointer;
+    }
+    #leaderboard {
+        margin-top: 30px;
+        text-align: left;
+        display: inline-block;
+    }
+    li {
+        margin: 5px 0;
+    }
+</style>
+</head>
+<body>
+
+<h1 id="title">Kayıt Ol ve Puan Kazan</h1>
+
+<div id="registerForm">
+    <input type="text" id="username" placeholder="Kullanıcı adı">
+    <button id="registerBtn">Kayıt Ol</button>
+    <p id="result"></p>
+</div>
+
+<div id="game" style="display:none;">
+    <h2>Hoşgeldin, <span id="userDisplay"></span>!</h2>
+    <button id="scoreBtn">Butona Bas (+1)</button>
+    <p>Puanın: <span id="scoreDisplay">0</span></p>
+</div>
+
+<h2>Leaderboard</h2>
+<ul id="leaderboard"></ul>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyDNPs86IvxikrbOnQn19HC17pq5_0Fd-Fk",
+  authDomain: "clickthebutton-5589c.firebaseapp.com",
+  databaseURL: "https://clickthebutton-5589c-default-rtdb.firebaseio.com",
+  projectId: "clickthebutton-5589c",
+  storageBucket: "clickthebutton-5589c.appspot.com",
+  messagingSenderId: "847918314591",
+  appId: "1:847918314591:web:d803629ff028d7546e57ea"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const registerForm = document.getElementById("registerForm");
+const gameDiv = document.getElementById("game");
+const usernameInput = document.getElementById("username");
+const userDisplay = document.getElementById("userDisplay");
+const scoreDisplay = document.getElementById("scoreDisplay");
+const result = document.getElementById("result");
+const leaderboard = document.getElementById("leaderboard");
+
+let currentUser = localStorage.getItem("currentUser");
+let puan = 0;
+
+// Leaderboard güncelle
+function updateLeaderboard() {
+    db.ref("users").once("value", snapshot=>{
+        const data = snapshot.val() || {};
+        const sorted = Object.entries(data).sort((a,b)=> b[1].score - a[1].score);
+        leaderboard.innerHTML = "";
+        sorted.forEach(([name, info])=>{
+            let li = document.createElement("li");
+            li.innerText = `${name}: ${info.score} puan`;
+            leaderboard.appendChild(li);
+        });
+    });
+}
+
+// Mevcut kullanıcı varsa yükle
+if(currentUser){
+    userDisplay.innerText = currentUser;
+    gameDiv.style.display = "block";
+    registerForm.style.display = "none";
+    db.ref("users/" + currentUser).once("value", snapshot=>{
+        puan = snapshot.val()?.score || 0;
+        scoreDisplay.innerText = puan;
+    });
+}
+
+// Kayıt olma
+document.getElementById("registerBtn").onclick = function(){
+    const username = usernameInput.value.trim();
+    if(!username) { result.innerText = "Kullanıcı adı gir!"; return; }
+
+    db.ref("users/" + username).once("value", snapshot=>{
+        if(snapshot.exists()){
+            result.innerText = "Bu kullanıcı zaten var!";
+        } else {
+            db.ref("users/" + username).set({score:0}, ()=>{
+                currentUser = username;
+                localStorage.setItem("currentUser", username);
+                puan = 0;
+                userDisplay.innerText = currentUser;
+                scoreDisplay.innerText = puan;
+                registerForm.style.display = "none";
+                gameDiv.style.display = "block";
+                updateLeaderboard();
+            });
+        }
+    });
+}
+
+// Puan artırma
+document.getElementById("scoreBtn").onclick = function(){
+    if(!currentUser) return;
+
+    puan += 1; // anında artır
+    scoreDisplay.innerText = puan; // ekranda göster
+
+    // Firebase'e kaydet
+    db.ref("users/" + currentUser + "/score").set(puan, ()=>{
+        updateLeaderboard();
+    });
+}
+
+// Başlangıçta leaderboard güncelle
+updateLeaderboard();
+setInterval(updateLeaderboard, 3000);
+</script>
+
+</body>
+</html>
